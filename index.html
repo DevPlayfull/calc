@@ -2,126 +2,221 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Flappy Bird</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classic Snake Game</title>
     <style>
         body {
-            background-color: #222;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden;
         }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+        }
+
+        #score-board {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            background: #2a2a2a;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        #score {
+            font-weight: bold;
+            color: #4caf50;
+        }
+
         canvas {
-            border: 2px solid #fff;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background-color: #000000;
+            border: 4px solid #333333;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-over-text {
+            color: #f44336;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<canvas id="canvas" width="288" height="512"></canvas>
+    <h1>SNAKE</h1>
+    <div id="score-board">Score: <span id="score">0</span></div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
 
-<script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
 
-// Load Images
-const bg = new Image();
-bg.src = "images/background-day.png"; // Change name if your bg is different
+        // Grid and game dimensions
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
 
-const fg = new Image();
-fg.src = "images/base.png";
+        // Game speed (lower = faster)
+        const gameSpeed = 100; 
 
-const pipeImg = new Image();
-pipeImg.src = "images/pipe-green.png";
+        // Snake setup
+        let snake = [
+            { x: 10, y: 10 },
+            { x: 9, y: 10 },
+            { x: 8, y: 10 }
+        ];
 
-const bird = new Image();
-bird.src = "images/yellowbird-midflap.png";
+        // Velocity components
+        let dx = 1;
+        let dy = 0;
 
-// Game Variables
-let bX = 50;
-let bY = 150;
-let gravity = 0.6;
-let jump = -9;
-let velocity = 0;
-let score = 0;
+        // Food coordinates
+        let foodX;
+        let foodY;
 
-// Pipe Settings (Fixed height issue)
-let gap = 110;
-let pipes = [];
+        // Score tracker
+        let score = 0;
 
-pipes[0] = {
-    x: canvas.width,
-    y: Math.floor(Math.random() * 180) + 80 // Safe range so it's not too high
-};
+        // Game loop control
+        let gameInterval;
+        let changingDirection = false;
 
-// Controls
-document.addEventListener("keydown", moveUp);
-document.addEventListener("click", moveUp);
+        // Start the game mechanics
+        main();
+        generateFood();
 
-function moveUp() {
-    velocity = jump;
-}
+        function main() {
+            if (hasGameEnded()) {
+                scoreElement.innerHTML = `<span class="game-over-text">${score} — Game Over! Press Refresh to Restart</span>`;
+                return;
+            }
 
-// Game Loop
-function draw() {
-    // 1. Draw Background
-    ctx.drawImage(bg, 0, 0);
+            changingDirection = false;
+            gameInterval = setTimeout(function onTick() {
+                clearCanvas();
+                drawFood();
+                moveSnake();
+                drawSnake();
+                // Repeat loop
+                main();
+            }, gameSpeed);
+        }
 
-    // 2. Draw and Move Pipes
-    for (let i = 0; i < pipes.length; i++) {
-        let constant = pipeImg.height + gap;
-        
-        // Top pipe (drawn upside down or positioned lower)
-        ctx.drawImage(pipeImg, pipes[i].x, pipes[i].y - pipeImg.height);
-        // Bottom pipe
-        ctx.drawImage(pipeImg, pipes[i].x, pipes[i].y + gap);
+        // Clear the canvas on every tick
+        function clearCanvas() {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
-        // Move pipes left
-        pipes[i].x -= 2;
-
-        // Spawn new pipe
-        if (pipes[i].x === 125) {
-            pipes.push({
-                x: canvas.width,
-                y: Math.floor(Math.random() * 180) + 80
+        // Draw snake parts
+        function drawSnake() {
+            snake.forEach((part, index) => {
+                // Head is brighter green than the body
+                ctx.fillStyle = index === 0 ? "#4caf50" : "#2e7d32";
+                ctx.strokeStyle = "#000000";
+                ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
+                ctx.strokeRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
             });
         }
 
-        // Detect collision
-        if (bX + bird.width >= pipes[i].x && bX <= pipes[i].x + pipeImg.width &&
-            (bY <= pipes[i].y || bY + bird.height >= pipes[i].y + gap) ||
-            bY + bird.height >= canvas.height - fg.height) {
-            location.reload(); // Restart on crash
+        // Advance snake position
+        function moveSnake() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            snake.unshift(head);
+
+            const hasEatenFood = snake[0].x === foodX && snake[0].y === foodY;
+            if (hasEatenFood) {
+                score += 10;
+                scoreElement.textContent = score;
+                generateFood();
+            } else {
+                snake.pop();
+            }
         }
 
-        if (pipes[i].x === 5) {
-            score++;
+        // Generate random coordinates for food
+        function generateFood() {
+            foodX = Math.floor(Math.random() * tileCount);
+            foodY = Math.floor(Math.random() * tileCount);
+
+            // Ensure food doesn't spawn inside the snake body
+            snake.forEach(part => {
+                const hasSpawnedOnSnake = part.x === foodX && part.y === foodY;
+                if (hasSpawnedOnSkull) generateFood();
+            });
         }
-    }
 
-    // 3. Draw Ground/Base
-    ctx.drawImage(fg, 0, canvas.height - fg.height);
+        // Draw food on canvas
+        function drawFood() {
+            ctx.fillStyle = "#f44336"; // Red apple
+            ctx.fillRect(foodX * gridSize, foodY * gridSize, gridSize, gridSize);
+        }
 
-    // 4. Draw Bird & Apply Gravity
-    ctx.drawImage(bird, bX, bY);
-    bY += velocity;
-    velocity += gravity;
+        // Collision logic
+        function hasGameEnded() {
+            // Self-collision check
+            for (let i = 4; i < snake.length; i++) {
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+            }
 
-    // 5. Render Score
-    ctx.fillStyle = "#FFF";
-    ctx.font = "20px Arial";
-    ctx.fillText("Score: " + score, 10, 30);
+            // Wall-collision check
+            const hitLeftWall = snake[0].x < 0;
+            const hitRightWall = snake[0].x >= tileCount;
+            const hitToptWall = snake[0].y < 0;
+            const hitBottomWall = snake[0].y >= tileCount;
 
-    requestAnimationFrame(draw);
-}
+            return hitLeftWall || hitRightWall || hitToptWall || hitBottomWall;
+        }
 
-// Run loop after images load
-bg.onload = function() {
-    draw();
-};
-</script>
+        // Event listener for user controls
+        document.addEventListener("keydown", changeDirection);
 
+        function changeDirection(event) {
+            const LEFT_KEY = 37;
+            const UP_KEY = 38;
+            const RIGHT_KEY = 39;
+            const DOWN_KEY = 40;
+
+            // Prevent simultaneous multi-directional input bugs
+            if (changingDirection) return;
+
+            const keyPressed = event.keyCode;
+            const goingUp = dy === -1;
+            const goingDown = dy === 1;
+            const goingRight = dx === 1;
+            const goingLeft = dx === -1;
+
+            if (keyPressed === LEFT_KEY && !goingRight) {
+                dx = -1;
+                dy = 0;
+                changingDirection = true;
+            }
+            if (keyPressed === UP_KEY && !goingDown) {
+                dx = 0;
+                dy = -1;
+                changingDirection = true;
+            }
+            if (keyPressed === RIGHT_KEY && !goingLeft) {
+                dx = 1;
+                dy = 0;
+                changingDirection = true;
+            }
+            if (keyPressed === DOWN_KEY && !goingUp) {
+                dx = 0;
+                dy = 1;
+                changingDirection = true;
+            }
+        }
+    </script>
 </body>
 </html>

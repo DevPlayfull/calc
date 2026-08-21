@@ -3,10 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <title>Flappy Bird</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+    </style>
 </head>
 <body>
-    <canvas id="canvas" width="288" height="512"></canvas>
-    <script src="game.js"></script>
+
+<canvas id="canvas" width="288" height="512"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+// Load Images
+const bg = new Image();
+bg.src = "images/background-day.png"; // Change name if your bg is different
+
+const fg = new Image();
+fg.src = "images/base.png";
+
+const pipeImg = new Image();
+pipeImg.src = "images/pipe-green.png";
+
+const bird = new Image();
+bird.src = "images/yellowbird-midflap.png";
+
+// Game Variables
+let bX = 50;
+let bY = 150;
+let gravity = 0.6;
+let jump = -9;
+let velocity = 0;
+let score = 0;
+
+// Pipe Settings (Fixed height issue)
+let gap = 110;
+let pipes = [];
+
+pipes[0] = {
+    x: canvas.width,
+    y: Math.floor(Math.random() * 180) + 80 // Safe range so it's not too high
+};
+
+// Controls
+document.addEventListener("keydown", moveUp);
+document.addEventListener("click", moveUp);
+
+function moveUp() {
+    velocity = jump;
+}
+
+// Game Loop
+function draw() {
+    // 1. Draw Background
+    ctx.drawImage(bg, 0, 0);
+
+    // 2. Draw and Move Pipes
+    for (let i = 0; i < pipes.length; i++) {
+        let constant = pipeImg.height + gap;
+        
+        // Top pipe (drawn upside down or positioned lower)
+        ctx.drawImage(pipeImg, pipes[i].x, pipes[i].y - pipeImg.height);
+        // Bottom pipe
+        ctx.drawImage(pipeImg, pipes[i].x, pipes[i].y + gap);
+
+        // Move pipes left
+        pipes[i].x -= 2;
+
+        // Spawn new pipe
+        if (pipes[i].x === 125) {
+            pipes.push({
+                x: canvas.width,
+                y: Math.floor(Math.random() * 180) + 80
+            });
+        }
+
+        // Detect collision
+        if (bX + bird.width >= pipes[i].x && bX <= pipes[i].x + pipeImg.width &&
+            (bY <= pipes[i].y || bY + bird.height >= pipes[i].y + gap) ||
+            bY + bird.height >= canvas.height - fg.height) {
+            location.reload(); // Restart on crash
+        }
+
+        if (pipes[i].x === 5) {
+            score++;
+        }
+    }
+
+    // 3. Draw Ground/Base
+    ctx.drawImage(fg, 0, canvas.height - fg.height);
+
+    // 4. Draw Bird & Apply Gravity
+    ctx.drawImage(bird, bX, bY);
+    bY += velocity;
+    velocity += gravity;
+
+    // 5. Render Score
+    ctx.fillStyle = "#FFF";
+    ctx.font = "20px Arial";
+    ctx.fillText("Score: " + score, 10, 30);
+
+    requestAnimationFrame(draw);
+}
+
+// Run loop after images load
+bg.onload = function() {
+    draw();
+};
+</script>
+
 </body>
 </html>

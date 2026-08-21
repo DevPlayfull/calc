@@ -10,7 +10,7 @@ const pipeSouth = new Image();
 
 bg.src = "images/bg.png";
 fg.src = "images/fg.png";
-birdImg.src = "images/yellowbird-midflap.png.png";
+birdImg.src = "images/yellowbird-midflap.png";
 pipeNorth.src = "images/pipeNorth.png";
 pipeSouth.src = "images/pipeSouth.png";
 

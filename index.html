@@ -3,30 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Calculator</title>
+    <title>Web Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            background-color: #f4f4f9;
         }
-        .calculator-card {
-            background: #ffffff;
+        .calculator {
+            background: white;
             padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 320px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
         }
         h2 {
             margin-top: 0;
-            color: #333;
             text-align: center;
+            color: #333;
         }
-        .form-group {
+        .input-group {
             margin-bottom: 15px;
         }
         label {
@@ -37,54 +37,47 @@
         }
         input, select {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ccc;
-            border-radius: 6px;
+            border-radius: 4px;
             box-sizing: border-box;
-            font-size: 16px;
         }
         button {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 16px;
             cursor: pointer;
-            font-weight: bold;
         }
         button:hover {
             background-color: #0056b3;
         }
-        #result-box {
+        .result {
             margin-top: 20px;
-            padding: 15px;
+            padding: 10px;
             background: #e9ecef;
-            border-radius: 6px;
+            border-radius: 4px;
             text-align: center;
             font-size: 18px;
             font-weight: bold;
             color: #333;
-            display: none;
-        }
-        .dev-mode {
-            border: 2px dashed #dc3545 !important;
-            background-color: #fff5f5;
         }
     </style>
 </head>
 <body>
 
-<div class="calculator-card" id="calcCard">
-    <h2>Calculator</h2>
+<div class="calculator">
+    <h2>Web Calculator</h2>
     
-    <div class="form-group">
+    <div class="input-group">
         <label for="num1">First Number:</label>
-        <input type="text" id="num1" placeholder="Enter first number..." oninput="checkDevCode()">
+        <input type="number" id="num1" placeholder="Enter first number">
     </div>
-
-    <div class="form-group">
+    
+    <div class="input-group">
         <label for="operation">Operation:</label>
         <select id="operation">
             <option value="+">+</option>
@@ -93,84 +86,54 @@
             <option value="/">/</option>
         </select>
     </div>
-
-    <div class="form-group">
+    
+    <div class="input-group">
         <label for="num2">Second Number:</label>
-        <input type="number" id="num2" placeholder="Enter second number...">
+        <input type="number" id="num2" placeholder="Enter second number">
     </div>
-
+    
     <button onclick="calculate()">Calculate</button>
-
-    <div id="result-box"></div>
+    
+    <div class="result" id="result">Result: 0</div>
 </div>
 
 <script>
-    let isDevMode = false;
+function calculate() {
+    // 1. Get values from the inputs
+    const num1 = parseFloat(document.getElementById('num1').value);
+    const operation = document.getElementById('operation').value;
+    const num2 = parseFloat(document.getElementById('num2').value);
+    const resultDiv = document.getElementById('result');
 
-    // Checks for the bypass code instantly while typing
-    function checkDevCode() {
-        const num1Input = document.getElementById('num1');
-        
-        if (num1Input.value === "815624" && !isDevMode) {
-            isDevMode = true;
-            alert("⚠️ DEV BYPASS ACTIVATED ⚠️\nAdvanced options unlocked.");
-            
-            // Visual indicator for dev mode
-            document.getElementById('calcCard').classList.add('dev-mode');
-            
-            // Dev shortcut: Pre-fill demo data
-            num1Input.value = "100"; 
-            document.getElementById('operation').value = "x";
-            document.getElementById('num2').value = "5";
-        }
+    // Validation check
+    if (isNaN(num1) || isNaN(num2)) {
+        resultDiv.textContent = "Please enter valid numbers.";
+        return;
     }
 
-    // Handles the core math execution logic
-    function calculate() {
-        const num1Raw = document.getElementById('num1').value;
-        const num2Raw = document.getElementById('num2').value;
-        const operation = document.getElementById('operation').value;
-        const resultBox = document.getElementById('result-box');
+    let answer;
 
-        // Validation check
-        if (num1Raw === "" || num2Raw === "") {
-            resultBox.style.display = "block";
-            resultBox.style.color = "#dc3545";
-            resultBox.innerText = "Error: Please fill in both numbers.";
+    // 2. Run the exact math logic from your Python code
+    if (operation === "+") {
+        answer = num1 + num2;
+    } else if (operation === "-") {
+        answer = num1 - num2;
+    } else if (operation === "x") {
+        answer = num1 * num2;
+    } else if (operation === "/") {
+        if (num2 === 0) {
+            resultDiv.textContent = "Error: Cannot divide by zero.";
             return;
         }
-
-        const num1 = parseFloat(num1Raw);
-        const num2 = parseFloat(num2Raw);
-        let answer = 0;
-
-        // Core conversion of your Python conditional structures
-        if (operation === "+") {
-            answer = num1 + num2;
-        } else if (operation === "-") {
-            answer = num1 - num2;
-        } else if (operation === "x") {
-            answer = num1 * num2;
-        } else if (operation === "/") {
-            if (num2 === 0) {
-                resultBox.style.display = "block";
-                resultBox.style.color = "#dc3545";
-                resultBox.innerText = "Error: Cannot divide by zero.";
-                return;
-            }
-            answer = num1 / num2;
-        } else {
-            resultBox.style.display = "block";
-            resultBox.style.color = "#dc3545";
-            resultBox.innerText = "Invalid choice.";
-            return;
-        }
-
-        // Output formatting
-        resultBox.style.display = "block";
-        resultBox.style.color = isDevMode ? "#dc3545" : "#28a745";
-        resultBox.innerText = isDevMode ? `[DEV] Answer: ${answer}` : `Answer: ${answer}`;
+        answer = num1 / num2;
+    } else {
+        resultDiv.textContent = "Invalid choice.";
+        return;
     }
+
+    // 3. Display the answer on the screen
+    resultDiv.textContent = "Result: " + answer;
+}
 </script>
 
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fraction Calculator</title>
+    <title>Calculator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,7 +19,7 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            width: 320px;
+            width: 300px;
         }
         h2 {
             margin-top: 0;
@@ -35,23 +35,12 @@
             font-weight: bold;
             color: #555;
         }
-        .fraction-inputs {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .fraction-line {
-            font-size: 20px;
-            font-weight: bold;
-            color: #777;
-        }
         input, select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
-            text-align: center;
         }
         button {
             width: 100%;
@@ -68,7 +57,7 @@
         }
         .result {
             margin-top: 20px;
-            padding: 15px;
+            padding: 10px;
             background: #e9ecef;
             border-radius: 4px;
             text-align: center;
@@ -81,19 +70,13 @@
 <body>
 
 <div class="calculator">
-    <h2>Fraction Calculator</h2>
+    <h2>Web Calculator</h2>
     
-    <!-- First Fraction -->
     <div class="input-group">
-        <label>First Fraction:</label>
-        <div class="fraction-inputs">
-            <input type="number" id="num1" placeholder="Num">
-            <span class="fraction-line">/</span>
-            <input type="number" id="den1" placeholder="Den" value="1">
-        </div>
+        <label for="num1">First Number:</label>
+        <input type="number" id="num1" placeholder="Enter first number">
     </div>
     
-    <!-- Operation Selector -->
     <div class="input-group">
         <label for="operation">Operation:</label>
         <select id="operation">
@@ -104,100 +87,53 @@
         </select>
     </div>
     
-    <!-- Second Fraction -->
     <div class="input-group">
-        <label>Second Fraction:</label>
-        <div class="fraction-inputs">
-            <input type="number" id="num2" placeholder="Num">
-            <span class="fraction-line">/</span>
-            <input type="number" id="den2" placeholder="Den" value="1">
-        </div>
+        <label for="num2">Second Number:</label>
+        <input type="number" id="num2" placeholder="Enter second number">
     </div>
     
     <button onclick="calculate()">Calculate</button>
+    
     <div class="result" id="result">Result: 0</div>
 </div>
 
 <script>
-    // Helper function to find Greatest Common Divisor (GCD) for simplifying fractions
-    function gcd(a, b) {
-        return b === 0 ? Math.abs(a) : gcd(b, a % b);
+function calculate() {
+    // 1. Get values from the inputs
+    const num1 = parseFloat(document.getElementById('num1').value);
+    const operation = document.getElementById('operation').value;
+    const num2 = parseFloat(document.getElementById('num2').value);
+    const resultDiv = document.getElementById('result');
+
+    // Validation check
+    if (isNaN(num1) || isNaN(num2)) {
+        resultDiv.textContent = "Please enter valid numbers.";
+        return;
     }
 
-    // Function to reduce fractions to their lowest terms
-    function reduceFraction(numerator, denominator) {
-        if (denominator === 0) return { error: "Error: Denominator cannot be zero." };
-        
-        // Handle negative signs cleanly
-        if (denominator < 0) {
-            numerator = -numerator;
-            denominator = -denominator;
+    let answer;
+
+    // 2. Run the exact math logic from your Python code
+    if (operation === "+") {
+        answer = num1 + num2;
+    } else if (operation === "-") {
+        answer = num1 - num2;
+    } else if (operation === "x") {
+        answer = num1 * num2;
+    } else if (operation === "/") {
+        if (num2 === 0) {
+            resultDiv.textContent = "Error: Cannot divide by zero.";
+            return;
         }
-        
-        const commonDivisor = gcd(numerator, denominator);
-        numerator /= commonDivisor;
-        denominator /= commonDivisor;
-        
-        if (denominator === 1) {
-            return `${numerator}`;
-        }
-        return `${numerator}/${denominator}`;
+        answer = num1 / num2;
+    } else {
+        resultDiv.textContent = "Invalid choice.";
+        return;
     }
 
-    function calculate() {
-        const resultDiv = document.getElementById('result');
-
-        // 1. Get values from UI inputs
-        const n1 = parseInt(document.getElementById('num1').value);
-        const d1 = parseInt(document.getElementById('den1').value);
-        const operation = document.getElementById('operation').value;
-        const n2 = parseInt(document.getElementById('num2').value);
-        const d2 = parseInt(document.getElementById('den2').value);
-
-        // Input validation
-        if (isNaN(n1) || isNaN(d1) || isNaN(n2) || isNaN(d2)) {
-            resultDiv.textContent = "Please enter integers in all fields.";
-            return;
-        }
-        if (d1 === 0 || d2 === 0) {
-            resultDiv.textContent = "Error: Denominators cannot be zero.";
-            return;
-        }
-
-        let resNum, resDen;
-
-        // 2. Perform fraction math arithmetic logic
-        if (operation === "+") {
-            resNum = (n1 * d2) + (n2 * d1);
-            resDen = d1 * d2;
-        } else if (operation === "-") {
-            resNum = (n1 * d2) - (n2 * d1);
-            resDen = d1 * d2;
-        } else if (operation === "x") {
-            resNum = n1 * n2;
-            resDen = d1 * d2;
-        } else if (operation === "/") {
-            if (n2 === 0) {
-                resultDiv.textContent = "Error: Cannot divide by zero.";
-                return;
-            }
-            resNum = n1 * d2;
-            resDen = d1 * n2;
-        } else {
-            resultDiv.textContent = "Invalid operation.";
-            return;
-        }
-
-        // 3. Simplify and display result
-        const reduction = reduceFraction(resNum, resDen);
-        if (reduction.error) {
-            resultDiv.textContent = reduction.error;
-        } else {
-            // Calculates decimal value equivalent for reference
-            const decimalVal = (resNum / resDen).toFixed(4).replace(/\.?0+$/, "");
-            resultDiv.innerHTML = `Result: ${reduction} <br><span style="font-size:14px; font-weight:normal; color:#666;">(${decimalVal})</span>`;
-        }
-    }
+    // 3. Display the answer on the screen
+    resultDiv.textContent = "Result: " + answer;
+}
 </script>
 
 </body>
